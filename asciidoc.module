@@ -1,0 +1,44 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_filter().
+ */
+function asciidoc_filter($op, $delta = 0, $format = -1, $text = '', $cache_id = 0) {
+  switch ($op) {
+    case 'list':
+      return array(0 => t('AsciiDoc filter'));
+
+    case 'description':
+      return t('Allows users to use AsciiDoc syntax.');
+
+    case 'process':
+      return asciidoc_process($text);
+
+    default:
+      return $text;
+  }
+}
+
+/**
+ * Implementation of hook_filter_tips().
+ */
+function asciidoc_filter_tips($delta = 0, $format = -1, $long) {
+  return t('You can use <a href="@user_guide">AsciiDoc syntax</a> to format and style the text. For a quick reference see the <a href="@cheatsheet">cheatsheet</a>.', array('@user_guide' => 'http://www.methods.co.nz/asciidoc/userguide.html', '@cheatsheet' => 'http://powerman.name/doc/asciidoc'));
+}
+
+/**
+ * Return asciidoc formatted text.
+ */
+function asciidoc_process($text) {
+  if (empty($text)) {
+    return '';
+  }
+
+  // we use basically asciidoc defaults: --doctype article --backend xhtml11
+  $command = sprintf('echo %s | asciidoc --no-header-footer -o - -', escapeshellarg($text));
+  exec($command, $lines);
+  $output = implode("\n", $lines);
+
+  return $output;
+}
