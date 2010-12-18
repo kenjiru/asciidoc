@@ -2,35 +2,40 @@
 // $Id$
 
 /**
- * Implementation of hook_filter().
+ * Implements hook_filter_info().
  */
-function asciidoc_filter($op, $delta = 0, $format = -1, $text = '', $cache_id = 0) {
-  switch ($op) {
-    case 'list':
-      return array(0 => t('AsciiDoc filter'));
-
-    case 'description':
-      return t('Allows users to use AsciiDoc syntax.');
-
-    case 'process':
-      return asciidoc_process($text);
-
-    default:
-      return $text;
-  }
+function asciidoc_filter_info() {
+  return array(
+    'asciidoc_simple' => array(
+      'title'            => t('Simple AsciiDoc filter'),
+      'description'      => t('Allows users to use AsciiDoc syntax.'),
+      'process callback' => '_asciidoc_filter_asciidoc_simple_process',
+      'tips callback'    => '_asciidoc_asciidoc_simple_tips',
+    ),
+  );
 }
 
 /**
- * Implementation of hook_filter_tips().
+ * Implements hook_filter_tips().
  */
-function asciidoc_filter_tips($delta = 0, $format = -1, $long) {
+function _asciidoc_asciidoc_simple_tips($filter, $format, $long) {
   return t('You can use <a href="@user_guide">AsciiDoc syntax</a> to format and style the text. For a quick reference see the <a href="@cheatsheet">cheatsheet</a>.', array('@user_guide' => 'http://www.methods.co.nz/asciidoc/userguide.html', '@cheatsheet' => 'http://powerman.name/doc/asciidoc'));
+}
+
+/**
+ * Process callback for asccidoc_simple filter.
+ *
+ * @return
+ *   As defined by hook_filter_FILTER_process().
+ */
+function _asciidoc_filter_asciidoc_simple_process($text, $filter, $format, $langcode, $cache, $cache_id) {
+  return _asciidoc_process($text);
 }
 
 /**
  * Return asciidoc formatted text.
  */
-function asciidoc_process($text) {
+function _asciidoc_process($text) {
   if (empty($text)) {
     return '';
   }

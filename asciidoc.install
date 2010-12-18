@@ -2,7 +2,12 @@
 // $Id$
 
 /**
- * Implementation of hook_requirements().
+ * @file
+ * Install, update and uninstall functions for the asciidoc module.
+ */
+
+/**
+ * Implements hook_requirements().
  */
 function asciidoc_requirements($phase) {
   $t = get_t();

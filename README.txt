@@ -19,7 +19,7 @@ To submit bug reports and feature suggestions, or to track changes:
 
 == Instalation ==
 
-* Install as usual, see http://drupal.org/node/70151 for further
+* Install as usual, see http://drupal.org/node/895232 for further
 information.
 
 == Configuration ==
