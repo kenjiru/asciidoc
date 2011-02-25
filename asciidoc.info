@@ -1,4 +1,3 @@
-; $Id$
 name = AsciiDoc filter
 description = Filter for AsciiDoc syntax.
 core = 7.x
