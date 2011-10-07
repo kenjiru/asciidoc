@@ -1,4 +1,5 @@
 <?php
+// $Id: asciidoc.module,v 1.2 2010/12/18 23:03:13 marvil07 Exp $
 
 /**
  * Implements hook_filter_info().
@@ -15,10 +16,130 @@ function asciidoc_filter_info() {
 }
 
 /**
+ * Implement hook_menu().
+ */
+function asciidoc_menu() {
+  $items = array();
+  
+  $items['admin/config/content/formats/asciidoc'] = array(
+    'title' => 'Aciidoc Filter',
+    'description' => 'Configuration for the Asciidoc filter.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asciidoc_config_form'),
+    'access arguments' => array('administer filters'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * Create and display the Asciidoc configuration form.
+ */
+function asciidoc_config_form($form, &$form_state) {
+  // Text field for the asciidoc executable path.
+  $form['asciidoc_asciidoc_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Asciidoc executable path'),
+    '#description' => t('The path to the asciidoc executable. Enter "asciidoc" 
+      if the executable is installed system wide.'),
+    '#default_value' => variable_get('asciidoc_asciidoc_path', 'asciidoc'),
+    '#size' => 60,
+    '#maxlength' => 200,
+    '#required' => TRUE,
+  );
+  
+  $highlight_options = drupal_map_assoc(
+    array("source-highlight", "Pygments"), 
+    'highlight_options'
+  );
+
+  // Select field for the highlight library
+  $form['asciidoc_highlight_library'] = array(
+    '#type' => 'select',
+    '#title' => t('Highlight library'),
+    '#description' => t('Select the highlight library to be used with 
+      asciidoc.'),
+    '#default_value' => variable_get('asciidoc_highlight_library',
+      'source-highlight'),
+    '#options' => $highlight_options,
+  );
+
+  // Text field for the Pygments library path.
+  $form['asciidoc_pygments_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Pygments library path'),
+    '#description' => t('The path to the Pygments library. Let the field blank 
+      if the library is in the system path.'),
+    '#default_value' => variable_get('asciidoc_pygments_path'),
+    '#states' => array(
+      // Only show this field when the 'asciidoc_highlight_library' select has
+      // the value Pygments.
+      'visible' => array(
+        ':input[name="asciidoc_highlight_library"]' => 
+          array('value' => 'Pygments'),
+      ),
+    ),
+    '#size' => 60,
+    '#maxlength' => 200,
+  );
+
+  // Submit button
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save settings'),
+    );
+
+  return $form;
+}
+
+/**
+ * Handles validating of the Asciidoc configuration form.
+ */
+function asciidoc_config_form_validate($form, &$form_state) {
+  exec($form_state['values']['asciidoc_asciidoc_path'] . ' --version', 
+    $output, $ret);
+  if ($ret !== 0) {
+    form_set_error('asciidoc_asciidoc_path', 
+      t('Could not find the Asciidoc executable!'));
+  }
+  
+  // If we used the Pygments library for highlighting, check for it's existence
+  if ($form_state['values']['asciidoc_highlight_library'] === 'Pygments') {
+    exec($form_state['values']['asciidoc_pygments_path'] . '/pygmentize -V', 
+      $output, $ret);
+    if ($ret !== 0) {
+      form_set_error('asciidoc_pygments_path', 
+        t('Could not find the Pygments library!'));
+    }
+  }
+}
+
+/**
+ * Handles saving of the Asciidoc configuration form.
+ */
+function asciidoc_config_form_submit($form, &$form_state) {
+  variable_set('asciidoc_asciidoc_path',
+    $form_state['values']['asciidoc_asciidoc_path']);
+  variable_set('asciidoc_highlight_library',
+    $form_state['values']['asciidoc_highlight_library']);
+  variable_set('asciidoc_pygments_path',
+    $form_state['values']['asciidoc_pygments_path']);
+  
+  drupal_set_message(t('The settings have been saved!'));
+}
+
+
+/**
  * Implements hook_filter_tips().
  */
 function _asciidoc_asciidoc_simple_tips($filter, $format, $long) {
-  return t('You can use <a href="@user_guide">AsciiDoc syntax</a> to format and style the text. For a quick reference see the <a href="@cheatsheet">cheatsheet</a>.', array('@user_guide' => 'http://www.methods.co.nz/asciidoc/userguide.html', '@cheatsheet' => 'http://powerman.name/doc/asciidoc'));
+  return t('You can use <a href="@user_guide">AsciiDoc syntax</a> to format 
+      and style the text. For a quick reference see the <a href="@cheatsheet">
+      cheatsheet</a>.', 
+    array('@user_guide' => 'http://www.methods.co.nz/asciidoc/userguide.html', 
+        '@cheatsheet' => 'http://powerman.name/doc/asciidoc')
+    );
 }
 
 /**
@@ -27,7 +148,12 @@ function _asciidoc_asciidoc_simple_tips($filter, $format, $long) {
  * @return
  *   As defined by hook_filter_FILTER_process().
  */
-function _asciidoc_filter_asciidoc_simple_process($text, $filter, $format, $langcode, $cache, $cache_id) {
+function _asciidoc_filter_asciidoc_simple_process($text, 
+    $filter, 
+    $format, 
+    $langcode, 
+    $cache, 
+    $cache_id) {
   return _asciidoc_process($text);
 }
 
@@ -38,11 +164,32 @@ function _asciidoc_process($text) {
   if (empty($text)) {
     return '';
   }
+  
+  $asciidoc_highlight_library = variable_get('asciidoc_highlight_library');
+  $asciidoc_pygments_path = variable_get('asciidoc_pygments_path');
+  $asciidoc_asciidoc_path = variable_get('asciidoc_asciidoc_path');
+  
+  $command_str = 'echo %s | ';
+  if ($asciidoc_highlight_library === 'Pygments') {
+    // include the Pygments library in the PATH of the command
+    if ($asciidoc_pygments_path !== '') {
+      $command_str .= 'PATH=$PATH:' . $asciidoc_pygments_path;
+    }
+    
+    // indicate to the Asciidoc that we are using the Pygments filter
+    $commdan_str .= ' ' . $asciidoc_asciidoc_path . ' -a pygments';
+  } else {
+    $command_str .= $asciidoc_asciidoc_path; 
+  }
+  
+  $command_str .= ' --no-header-footer -o - -';
 
   // we use basically asciidoc defaults: --doctype article --backend xhtml11
-  $command = sprintf('echo %s | asciidoc --no-header-footer -o - -', escapeshellarg($text));
+  $command = sprintf($command_str, escapeshellarg($text));
   exec($command, $lines);
   $output = implode("\n", $lines);
+  
+  $output = "<div class='asciidoc'>\n" . $output . "\n</div>\n";
 
   return $output;
 }
