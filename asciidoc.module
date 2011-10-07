@@ -177,7 +177,7 @@ function _asciidoc_process($text) {
     }
     
     // indicate to the Asciidoc that we are using the Pygments filter
-    $commdan_str .= ' ' . $asciidoc_asciidoc_path . ' -a pygments';
+    $command_str .= ' ' . $asciidoc_asciidoc_path . ' -a pygments';
   } else {
     $command_str .= $asciidoc_asciidoc_path; 
   }
