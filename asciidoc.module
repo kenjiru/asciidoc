@@ -7,10 +7,11 @@
 function asciidoc_filter_info() {
   return array(
     'asciidoc_simple' => array(
-      'title'            => t('Simple AsciiDoc filter'),
+      'title'            => t('AsciiDoc filter'),
       'description'      => t('Allows users to use AsciiDoc syntax.'),
-      'process callback' => '_asciidoc_filter_asciidoc_simple_process',
-      'tips callback'    => '_asciidoc_asciidoc_simple_tips',
+      'process callback' => 'asciidoc_process_callback',
+      'tips callback'    => 'asciidoc_filter_tips',
+      'settings callback' => 'asciidoc_filter_settings_callback',
     ),
   );
 }
@@ -22,8 +23,9 @@ function asciidoc_menu() {
   $items = array();
   
   $items['admin/config/content/formats/asciidoc'] = array(
-    'title' => 'Aciidoc Filter',
-    'description' => 'Configuration for the Asciidoc filter.',
+    'title' => 'AciiDoc Filter',
+    'description' => 'Configure the AsciiDoc filter.',
+    'file' => 'asciidoc.admin.inc',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('asciidoc_config_form'),
     'access arguments' => array('administer filters'),
@@ -34,85 +36,17 @@ function asciidoc_menu() {
 }
 
 /**
- * Create and display the Asciidoc configuration form.
+ * Settings callback for the AsciiDoc filter.
  */
-function asciidoc_config_form($form, &$form_state) {
-  // Text field for the asciidoc executable path.
-  $form['asciidoc_asciidoc_path'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Asciidoc executable path'),
-    '#description' => t('The path to the asciidoc executable. Enter "asciidoc" 
-      if the executable is installed system wide.'),
-    '#default_value' => variable_get('asciidoc_asciidoc_path', 'asciidoc'),
-    '#size' => 60,
-    '#maxlength' => 200,
-    '#required' => TRUE,
-  );
-  
-  $highlight_options = drupal_map_assoc(
-    array("source-highlight", "Pygments"), 
-    'highlight_options'
-  );
-
-  // Select field for the highlight library
-  $form['asciidoc_highlight_library'] = array(
-    '#type' => 'select',
-    '#title' => t('Highlight library'),
-    '#description' => t('Select the highlight library to be used with 
-      asciidoc.'),
-    '#default_value' => variable_get('asciidoc_highlight_library',
-      'source-highlight'),
-    '#options' => $highlight_options,
-  );
-
-  // Text field for the Pygments library path.
-  $form['asciidoc_pygments_path'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Pygments library path'),
-    '#description' => t('The path to the Pygments library. Let the field blank 
-      if the library is in the system path.'),
-    '#default_value' => variable_get('asciidoc_pygments_path'),
-    '#states' => array(
-      // Only show this field when the 'asciidoc_highlight_library' select has
-      // the value Pygments.
-      'visible' => array(
-        ':input[name="asciidoc_highlight_library"]' => 
-          array('value' => 'Pygments'),
-      ),
-    ),
-    '#size' => 60,
-    '#maxlength' => 200,
-  );
-
-  return system_settings_form($form);
-}
-
-/**
- * Handles validating of the Asciidoc configuration form.
- */
-function asciidoc_config_form_validate($form, &$form_state) {
-  exec($form_state['values']['asciidoc_asciidoc_path'] . ' --version', 
-    $output, $ret);
-  if ($ret !== 0) {
-    form_set_error('asciidoc_asciidoc_path', 
-      t('Could not find the Asciidoc executable!'));
-  }
-  
-  // If we used the Pygments library for highlighting, check for it's existence
-  if ($form_state['values']['asciidoc_highlight_library'] === 'Pygments') {
-    exec($form_state['values']['asciidoc_pygments_path'] . '/pygmentize -V', 
-      $output, $ret);
-    if ($ret !== 0) {
-      form_set_error('asciidoc_pygments_path', 
-        t('Could not find the Pygments library!'));
-    }
-  }
+function asciidoc_filter_settings_callback($form, &$form_state, $filter, $format, $defaults, $filters) {
+  require_once drupal_get_path('module', 'asciidoc') .'/asciidoc.admin.inc';
+  return _asciidoc_filter_settings();
 }
 
 /**
  * Implements hook_filter_tips().
  */
-function _asciidoc_asciidoc_simple_tips($filter, $format, $long) {
+function asciidoc_filter_tips($filter, $format, $long) {
   return t('You can use <a href="@user_guide">AsciiDoc syntax</a> to format 
       and style the text. For a quick reference see the <a href="@cheatsheet">
       cheatsheet</a>.', 
@@ -122,24 +56,12 @@ function _asciidoc_asciidoc_simple_tips($filter, $format, $long) {
 }
 
 /**
- * Process callback for asccidoc_simple filter.
+ * Process callback for asciidoc_simple filter.
  *
  * @return
  *   As defined by hook_filter_FILTER_process().
  */
-function _asciidoc_filter_asciidoc_simple_process($text, 
-    $filter, 
-    $format, 
-    $langcode, 
-    $cache, 
-    $cache_id) {
-  return _asciidoc_process($text);
-}
-
-/**
- * Return asciidoc formatted text.
- */
-function _asciidoc_process($text) {
+function asciidoc_process_callback($text, $filter, $format, $langcode, $cache, $cache_id) {
   if (empty($text)) {
     return '';
   }
