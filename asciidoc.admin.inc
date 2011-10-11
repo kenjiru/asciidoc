@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Form (items) for filter settings.
  */
@@ -72,16 +71,19 @@ function asciidoc_config_form($form, &$form_state) {
  * Handles validating of the AsciiDoc configuration form.
  */
 function asciidoc_config_form_validate($form, &$form_state) {
-  exec($form_state['values']['asciidoc_asciidoc_path'] . ' --version', 
-    $output, $ret);
+  $asciidoc_highlight_library = $form_state['values']['asciidoc_highlight_library'];
+  $asciidoc_pygments_path = $form_state['values']['asciidoc_pygments_path'];
+  $asciidoc_asciidoc_path = $form_state['values']['asciidoc_asciidoc_path'];
+  
+  exec(escapeshellcmd($asciidoc_asciidoc_path . ' --version'), $output, $ret);
   if ($ret !== 0) {
     form_set_error('asciidoc_asciidoc_path', 
       t('Could not find the Asciidoc executable!'));
   }
   
   // If we used the Pygments library for highlighting, check for it's existence
-  if ($form_state['values']['asciidoc_highlight_library'] === 'Pygments') {
-    exec($form_state['values']['asciidoc_pygments_path'] . '/pygmentize -V', 
+  if ($asciidoc_highlight_library === 'Pygments') {
+    exec(escapeshellcmd($asciidoc_pygments_path . '/pygmentize -V'), 
       $output, $ret);
     if ($ret !== 0) {
       form_set_error('asciidoc_pygments_path', 
