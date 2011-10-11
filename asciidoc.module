@@ -1,6 +1,4 @@
 <?php
-// $Id: asciidoc.module,v 1.2 2010/12/18 23:03:13 marvil07 Exp $
-
 /**
  * Implements hook_filter_info().
  */
@@ -87,7 +85,7 @@ function asciidoc_process_callback($text, $filter, $format, $langcode, $cache, $
 
   // we use basically asciidoc defaults: --doctype article --backend xhtml11
   $command = sprintf($command_str, escapeshellarg($text));
-  exec($command, $lines);
+  exec(escapeshellcmd($command), $lines);
   $output = implode("\n", $lines);
   
   $output = "<div class='asciidoc'>\n" . $output . "\n</div>\n";

@@ -1,5 +1,3 @@
-// $Id: README.txt,v 1.2 2010/12/18 23:03:13 marvil07 Exp $
-
 = AsciiDoc filter =
 
 This module provides AsciiDoc filter integration for Drupal input
