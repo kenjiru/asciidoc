@@ -1,6 +1,4 @@
 <?php
-// $Id: asciidoc.install,v 1.2 2010/12/18 23:03:13 marvil07 Exp $
-
 /**
  * @file
  * Install, update and uninstall functions for the asciidoc module.

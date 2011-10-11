@@ -1,7 +1,6 @@
 = AsciiDoc filter =
 
-This module provides AsciiDoc filter integration for Drupal input
-formats.
+This module provides AsciiDoc filter integration for Drupal input formats.
 
 == Features ==
 
@@ -17,8 +16,7 @@ To submit bug reports and feature suggestions, or to track changes:
 
 == Instalation ==
 
-* Install as usual, see http://drupal.org/node/895232 for further
-information.
+* Install as usual, see http://drupal.org/node/895232 for further information.
 
 == Configuration ==
 
@@ -35,4 +33,6 @@ information.
 
 The authors of AsciiDoc.
 
-Current Maintainer: Marco Villegas (marvil07)
+.Current Maintainers: 
+- Marco Villegas (marvil07)
+- kenjiru <kenjiru.ro@gmail.com>
